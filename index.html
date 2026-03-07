@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stellantis Performance Academy</title>
+  <link rel="stylesheet" href="/src/ui/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="canvas"></canvas>
+
+    <!-- HUD Overlay -->
+    <div id="hud">
+      <div id="hud-top">
+        <div id="brand">
+          <span class="brand-mark">STELLANTIS</span>
+          <span class="brand-sub">PERFORMANCE ACADEMY</span>
+        </div>
+        <div id="mode-indicator">SHOWROOM</div>
+      </div>
+
+      <div id="hud-bottom">
+        <div id="controls-hint">
+          <span data-mode="showroom">WASD — Move &nbsp; Mouse — Look &nbsp; E — Enter Vehicle &nbsp; TAB — Diagnose</span>
+          <span data-mode="interior" style="display:none">Mouse — Look Around &nbsp; F — Exit Vehicle &nbsp; SPACE — Start Engine</span>
+          <span data-mode="drive" style="display:none">WASD — Drive &nbsp; SPACE — Brake &nbsp; ESC — Exit Drive</span>
+          <span data-mode="diagnose" style="display:none">Click — Inspect Part &nbsp; Mouse — Rotate &nbsp; TAB — Exit Diagnose</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vehicle Select Panel -->
+    <div id="vehicle-select" class="panel hidden">
+      <h2>SELECT VEHICLE</h2>
+      <div id="vehicle-list"></div>
+    </div>
+
+    <!-- Diagnostic Panel -->
+    <div id="diagnostic-panel" class="panel hidden">
+      <h2>DIAGNOSTICS</h2>
+      <div id="diag-info">
+        <div class="diag-section">
+          <h3>VEHICLE</h3>
+          <p id="diag-vehicle-name">—</p>
+        </div>
+        <div class="diag-section">
+          <h3>SELECTED PART</h3>
+          <p id="diag-part-name">Click a part to inspect</p>
+          <p id="diag-part-info"></p>
+        </div>
+        <div class="diag-section">
+          <h3>SYSTEM STATUS</h3>
+          <div id="diag-systems"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loader-content">
+        <div class="loader-brand">STELLANTIS</div>
+        <div class="loader-sub">PERFORMANCE ACADEMY</div>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
+        <div class="loader-status">Initializing...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

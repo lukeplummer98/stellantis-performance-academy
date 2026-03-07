@@ -1,0 +1,320 @@
+/* ─── Stellantis Performance Academy ─── */
+/* Premium dark automotive aesthetic      */
+
+:root {
+  --color-bg: #0a0a0a;
+  --color-surface: #141414;
+  --color-accent: #0066ff;
+  --color-accent-warm: #ff3c00;
+  --color-text: #e8e8e8;
+  --color-text-dim: #666;
+  --color-border: #222;
+  --font-primary: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-bg);
+  font-family: var(--font-primary);
+  color: var(--color-text);
+  cursor: crosshair;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+#canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ─── HUD ─── */
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 32px;
+  z-index: 10;
+}
+
+#hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+#brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand-mark {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--color-text);
+}
+
+.brand-sub {
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+#mode-indicator {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  padding: 6px 16px;
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  text-transform: uppercase;
+  background: rgba(0, 102, 255, 0.08);
+}
+
+#hud-bottom {
+  display: flex;
+  justify-content: center;
+}
+
+#controls-hint {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 20px;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+}
+
+/* ─── Panels ─── */
+
+.panel {
+  position: absolute;
+  top: 50%;
+  right: 32px;
+  transform: translateY(-50%);
+  width: 320px;
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  z-index: 20;
+  pointer-events: all;
+}
+
+.panel.hidden {
+  display: none;
+}
+
+.panel h2 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--color-accent);
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panel h3 {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: var(--color-text-dim);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.diag-section {
+  margin-bottom: 16px;
+}
+
+.diag-section p {
+  font-size: 13px;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+/* Vehicle list items */
+.vehicle-card {
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.vehicle-card:hover {
+  border-color: var(--color-accent);
+  background: rgba(0, 102, 255, 0.06);
+}
+
+.vehicle-card .vehicle-name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.vehicle-card .vehicle-brand {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* Diagnostic status indicators */
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.status-label {
+  font-size: 11px;
+  color: var(--color-text-dim);
+  letter-spacing: 1px;
+}
+
+.status-value {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.status-ok { color: #00cc66; }
+.status-warn { color: #ffaa00; }
+.status-error { color: #ff3333; }
+
+/* ─── Loading Screen ─── */
+
+#loading-screen {
+  position: absolute;
+  inset: 0;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: opacity 0.6s ease;
+}
+
+#loading-screen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-content {
+  text-align: center;
+}
+
+.loader-brand {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 12px;
+  margin-bottom: 4px;
+}
+
+.loader-sub {
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--color-text-dim);
+  margin-bottom: 40px;
+}
+
+.loader-bar {
+  width: 200px;
+  height: 2px;
+  background: var(--color-border);
+  margin: 0 auto 16px;
+  overflow: hidden;
+}
+
+.loader-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.loader-status {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+/* ─── Pointer Lock ─── */
+body.pointer-locked {
+  cursor: none;
+}
+
+/* ─── Crosshair ─── */
+#crosshair {
+  position: absolute;
+  top: 50%;  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px; height: 20px;
+  pointer-events: none;
+  z-index: 15;
+}
+
+#crosshair::before,
+#crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+#crosshair::before {
+  width: 1px; height: 100%;
+  left: 50%; top: 0;
+}
+
+#crosshair::after {
+  width: 100%; height: 1px;
+  top: 50%; left: 0;
+}
+
+/* ─── Interaction Prompt ─── */
+#interact-prompt {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: var(--color-text);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 8px 20px;
+  border: 1px solid var(--color-accent);
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+  text-transform: uppercase;
+}
