@@ -19,8 +19,26 @@
  */
 
 export const vehicleConfigs = [
+  {
+    name: 'Peugeot 3008',
+    brand: 'Peugeot',
+    path: '/3008.glb',
+    position: [0, 0, 0],
+    scale: 1,
+    rotation: 0,
+    seatPosition: { x: 0.4, y: 1.3, z: 0.2 },
+    doors: {},
+    systems: {
+      'Engine': 'ok',
+      'Transmission': 'ok',
+      'Brakes': 'ok',
+      'Suspension': 'ok',
+      'Electrical': 'ok',
+      'Cooling': 'ok',
+    },
+  },
   // ──────────────────────────────────────────
-  // EXAMPLE — uncomment and adjust when you drop in a .glb
+  // MORE VEHICLES — drop .glb in public/ and add entries
   // ──────────────────────────────────────────
   // {
   //   name: 'Dodge Charger Daytona',
