@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+import { fixMaterials } from './MaterialFixer.js';
 
 export class ModelLoader {
   constructor(scene) {
@@ -66,6 +67,23 @@ export class ModelLoader {
             }
           });
 
+          // Fix glass, mirrors, lights
+          fixMaterials(model);
+
+          // Find wheel meshes for rotation during driving
+          const wheels = [];
+          model.traverse((child) => {
+            const n = child.name.toLowerCase();
+            if (
+              n.startsWith('cylinder') ||
+              n.includes('wheel') ||
+              n.includes('rim') ||
+              (n.startsWith('circle_004') || n.startsWith('circle_008'))
+            ) {
+              wheels.push(child);
+            }
+          });
+
           this.scene.add(model);
 
           // Compute bounding box for interaction radius
@@ -81,6 +99,7 @@ export class ModelLoader {
             boundingBox: box,
             center,
             size,
+            wheels,
             animations: gltf.animations || [],
             mixer: gltf.animations.length > 0 ? new THREE.AnimationMixer(model) : null,
           };

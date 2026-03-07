@@ -12,6 +12,7 @@ const FRICTION = 4;
 const CHASE_DISTANCE = 8;
 const CHASE_HEIGHT = 3;
 const CHASE_SMOOTH = 3;
+const WHEEL_RADIUS = 0.35; // approximate tire radius in meters
 
 export class DriveSystem {
   constructor(camera) {
@@ -108,6 +109,14 @@ export class DriveSystem {
     // Update center for interaction system
     this.vehicle.center.copy(this.vehicle.model.position);
     this.vehicle.center.y += this.vehicle.size.y / 2;
+
+    // Rotate wheels
+    if (this.vehicle.wheels && this.vehicle.wheels.length > 0) {
+      const angularVelocity = this.speed / WHEEL_RADIUS;
+      for (const wheel of this.vehicle.wheels) {
+        wheel.rotation.x += angularVelocity * delta;
+      }
+    }
 
     // Chase camera
     const idealOffset = new THREE.Vector3(
