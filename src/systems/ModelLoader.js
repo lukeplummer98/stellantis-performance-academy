@@ -71,16 +71,23 @@ export class ModelLoader {
           fixMaterials(model);
 
           // Find wheel meshes for rotation during driving
-          const wheels = [];
+          // Supports naming: "FL wheel", "FR wheel", "RL wheel", "RR wheel"
+          // Also falls back to legacy Cylinder/Circle naming
+          const wheels = { fl: null, fr: null, rl: null, rr: null, all: [] };
           model.traverse((child) => {
             const n = child.name.toLowerCase();
-            if (
+            // Named FL/FR/RL/RR convention
+            if (n.includes('fl') && n.includes('wheel')) { wheels.fl = child; wheels.all.push(child); }
+            else if (n.includes('fr') && n.includes('wheel')) { wheels.fr = child; wheels.all.push(child); }
+            else if (n.includes('rl') && n.includes('wheel')) { wheels.rl = child; wheels.all.push(child); }
+            else if (n.includes('rr') && n.includes('wheel')) { wheels.rr = child; wheels.all.push(child); }
+            // Legacy fallback
+            else if (
               n.startsWith('cylinder') ||
-              n.includes('wheel') ||
               n.includes('rim') ||
               (n.startsWith('circle_004') || n.startsWith('circle_008'))
             ) {
-              wheels.push(child);
+              wheels.all.push(child);
             }
           });
 

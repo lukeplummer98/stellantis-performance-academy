@@ -11,6 +11,7 @@ import { InteractionSystem, InteractionMode } from './systems/InteractionSystem.
 import { DriveSystem } from './systems/DriveSystem.js';
 import { DiagnosticOrbitControls } from './systems/DiagnosticOrbitControls.js';
 import { HUDManager } from './ui/HUDManager.js';
+import { ThemeEngine } from './ui/ThemeEngine.js';
 import { vehicleConfigs } from './vehicleConfig.js';
 
 class App {
@@ -32,6 +33,7 @@ class App {
     );
     this.driveSystem = new DriveSystem(this.scene.camera);
     this.orbitControls = new DiagnosticOrbitControls(this.scene.camera, this.canvas);
+    this.themeEngine = new ThemeEngine(this.scene.scene);
 
     // Add crosshair element
     this._createCrosshair();
@@ -119,6 +121,14 @@ class App {
     this.driveSystem.update(delta);
     this.orbitControls.update();
     this.modelLoader.update(delta);
+
+    // Brand theme — switch based on nearby vehicle
+    const nearby = this.interaction.nearbyVehicle;
+    if (nearby) {
+      this.themeEngine.applyTheme(nearby.config.brand);
+    } else if (!this.modelLoader.activeVehicle) {
+      this.themeEngine.resetTheme();
+    }
 
     // Render
     this.scene.render();

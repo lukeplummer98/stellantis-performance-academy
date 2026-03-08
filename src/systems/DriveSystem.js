@@ -13,6 +13,8 @@ const CHASE_DISTANCE = 8;
 const CHASE_HEIGHT = 3;
 const CHASE_SMOOTH = 3;
 const WHEEL_RADIUS = 0.35; // approximate tire radius in meters
+const MAX_STEER_ANGLE = 0.5; // max front wheel turn angle in radians
+const STEER_RETURN_SPEED = 4; // how fast wheels straighten
 
 export class DriveSystem {
   constructor(camera) {
@@ -22,6 +24,7 @@ export class DriveSystem {
 
     this.speed = 0;
     this.steerAngle = 0;
+    this.frontWheelAngle = 0;
     this.chassisRotation = 0;
 
     this.keys = { forward: false, backward: false, left: false, right: false, brake: false };
@@ -111,10 +114,27 @@ export class DriveSystem {
     this.vehicle.center.y += this.vehicle.size.y / 2;
 
     // Rotate wheels
-    if (this.vehicle.wheels && this.vehicle.wheels.length > 0) {
+    const w = this.vehicle.wheels;
+    if (w && w.all.length > 0) {
       const angularVelocity = this.speed / WHEEL_RADIUS;
-      for (const wheel of this.vehicle.wheels) {
-        wheel.rotation.x += angularVelocity * delta;
+
+      // Front wheel steering angle
+      let targetSteer = 0;
+      if (this.keys.left) targetSteer = MAX_STEER_ANGLE;
+      else if (this.keys.right) targetSteer = -MAX_STEER_ANGLE;
+      this.frontWheelAngle += (targetSteer - this.frontWheelAngle) * Math.min(STEER_RETURN_SPEED * delta, 1);
+
+      // Named wheels — rotate + steer front
+      if (w.fl) { w.fl.rotation.x += angularVelocity * delta; w.fl.rotation.z = this.frontWheelAngle; }
+      if (w.fr) { w.fr.rotation.x += angularVelocity * delta; w.fr.rotation.z = this.frontWheelAngle; }
+      if (w.rl) { w.rl.rotation.x += angularVelocity * delta; }
+      if (w.rr) { w.rr.rotation.x += angularVelocity * delta; }
+
+      // Legacy unnamed wheels — just spin
+      for (const wheel of w.all) {
+        if (wheel !== w.fl && wheel !== w.fr && wheel !== w.rl && wheel !== w.rr) {
+          wheel.rotation.x += angularVelocity * delta;
+        }
       }
     }
 
