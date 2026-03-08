@@ -37,6 +37,24 @@ export const vehicleConfigs = [
       'Cooling': 'ok',
     },
   },
+  {
+    name: 'Lotus Emira',
+    brand: 'Lotus',
+    path: '/LOTUS EMIRA v4.glb',
+    position: [10, 0, 0],
+    scale: 1,
+    rotation: -Math.PI / 6,
+    seatPosition: { x: 0.35, y: 1.0, z: 0.1 },
+    doors: {},
+    systems: {
+      'Engine': 'ok',
+      'Transmission': 'ok',
+      'Brakes': 'ok',
+      'Suspension': 'ok',
+      'Electrical': 'ok',
+      'Cooling': 'warn',
+    },
+  },
   // ──────────────────────────────────────────
   // MORE VEHICLES — drop .glb in public/ and add entries
   // ──────────────────────────────────────────

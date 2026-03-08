@@ -6,7 +6,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 // Minimal GLB parser — reads the JSON chunk to extract node/mesh/material names
-const filePath = resolve('public/3008.glb');
+const filePath = resolve(process.argv[2] || 'public/3008.glb');
 const buffer = readFileSync(filePath);
 
 // GLB header: magic(4) + version(4) + length(4) + chunkLength(4) + chunkType(4)

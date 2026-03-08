@@ -5,15 +5,18 @@
 import * as THREE from 'three';
 
 // Material names that should be transparent glass
-const GLASS_MATERIALS = ['GlassBlack', 'GlassWhite'];
+const GLASS_MATERIALS = ['GlassBlack', 'GlassWhite', 'Windows', 'glass'];
 
 // Material names that should be highly reflective (mirrors)
-const MIRROR_MATERIALS = ['Mirror'];
+const MIRROR_MATERIALS = ['Mirror', 'chrome'];
 
 // Material names that should emit light
 const EMISSIVE_MATERIALS = {
   'Light': { color: 0xffffff, intensity: 2 },
   'LightRed': { color: 0xff2200, intensity: 1.5 },
+  'frontLight': { color: 0xffffff, intensity: 2.5 },
+  'backLights': { color: 0xff1100, intensity: 1.5 },
+  'emissions': { color: 0xffffff, intensity: 1 },
 };
 
 export function fixMaterials(model) {
@@ -24,8 +27,9 @@ export function fixMaterials(model) {
 
     // ─── Glass ───
     if (GLASS_MATERIALS.includes(matName)) {
+      const isDark = matName === 'GlassBlack' || matName === 'Windows';
       child.material = new THREE.MeshPhysicalMaterial({
-        color: matName === 'GlassBlack' ? 0x111111 : 0xffffff,
+        color: isDark ? 0x111111 : 0xffffff,
         metalness: 0.0,
         roughness: 0.05,
         transmission: 0.92,
