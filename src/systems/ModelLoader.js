@@ -71,7 +71,10 @@ export class ModelLoader {
           fixMaterials(model);
 
           // Find wheel meshes for rotation during driving
-          // Supports naming: "FL wheel", "FR wheel", "RL wheel", "RR wheel"
+          // Supports naming conventions:
+          //   - "FL wheel", "FR wheel", "RL wheel", "RR wheel"
+          //   - "FrontLeftWheel", "FrontRightWheel", "RearLeftWheel", "RearRightWheel"
+          //   - "Wheel.Ft.L", "Wheel.Ft.R", "Wheel.Bk.L", "Wheel.Bk.R" (McLaren style)
           // Also falls back to legacy Cylinder/Circle naming
           const wheels = { fl: null, fr: null, rl: null, rr: null, all: [] };
           model.traverse((child) => {
@@ -81,14 +84,16 @@ export class ModelLoader {
             else if (n.includes('fr') && n.includes('wheel')) { wheels.fr = child; wheels.all.push(child); }
             else if (n.includes('rl') && n.includes('wheel')) { wheels.rl = child; wheels.all.push(child); }
             else if (n.includes('rr') && n.includes('wheel')) { wheels.rr = child; wheels.all.push(child); }
-            // Legacy fallback
-            else if (
-              n.startsWith('cylinder') ||
-              n.includes('rim') ||
-              (n.startsWith('circle_004') || n.startsWith('circle_008'))
-            ) {
-              wheels.all.push(child);
-            }
+            // FrontLeft/FrontRight/RearLeft/RearRight convention (e.g. Blender exports)
+            else if (n.includes('frontleft') && n.includes('wheel')) { wheels.fl = child; wheels.all.push(child); }
+            else if (n.includes('frontright') && n.includes('wheel')) { wheels.fr = child; wheels.all.push(child); }
+            else if (n.includes('rearleft') && n.includes('wheel')) { wheels.rl = child; wheels.all.push(child); }
+            else if (n.includes('rearright') && n.includes('wheel')) { wheels.rr = child; wheels.all.push(child); }
+            // McLaren style: Wheel.Ft.L, Wheel.Ft.R, Wheel.Bk.L, Wheel.Bk.R
+            else if (n.includes('wheel') && n.includes('ft') && n.includes('.l')) { wheels.fl = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('ft') && n.includes('.r')) { wheels.fr = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('bk') && n.includes('.l')) { wheels.rl = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('bk') && n.includes('.r')) { wheels.rr = child; wheels.all.push(child); }
           });
 
           this.scene.add(model);

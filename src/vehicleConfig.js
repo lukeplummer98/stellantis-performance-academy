@@ -22,7 +22,7 @@ export const vehicleConfigs = [
   {
     name: 'Peugeot 3008',
     brand: 'Peugeot',
-    path: '/3008.glb',
+    path: '/3008_working_V2.glb',
     position: [0, 0, 0],
     scale: 1,
     rotation: 0,
@@ -53,6 +53,24 @@ export const vehicleConfigs = [
       'Suspension': 'ok',
       'Electrical': 'ok',
       'Cooling': 'warn',
+    },
+  },
+  {
+    name: 'McLaren MP4',
+    brand: 'McLaren',
+    path: '/mclaren_mp4_rigged.glb',
+    position: [20, 0, 0],
+    scale: 1,
+    rotation: 0,
+    seatPosition: { x: 0.35, y: 0.9, z: 0.1 },
+    doors: {},
+    systems: {
+      'Engine': 'ok',
+      'Transmission': 'ok',
+      'Brakes': 'ok',
+      'Suspension': 'ok',
+      'Electrical': 'ok',
+      'Cooling': 'ok',
     },
   },
   // ──────────────────────────────────────────

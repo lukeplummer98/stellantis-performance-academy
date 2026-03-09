@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wheel Animation Test Lab</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      overflow: hidden;
+    }
+    #app {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      width: 100vw;
+      height: 100vh;
+    }
+    .viewport {
+      position: relative;
+      border: 1px solid #333;
+      overflow: hidden;
+    }
+    .viewport canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .viewport-label {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.7);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    #controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      padding: 16px 24px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 400px;
+      z-index: 100;
+    }
+    #controls h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #aaa;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .control-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .control-row label {
+      width: 100px;
+      font-size: 13px;
+    }
+    .control-row input[type="range"] {
+      flex: 1;
+      accent-color: #4a9eff;
+    }
+    .control-row .value {
+      width: 60px;
+      text-align: right;
+      font-family: monospace;
+      font-size: 13px;
+      color: #4a9eff;
+    }
+    #vehicle-select {
+      padding: 6px 10px;
+      background: #333;
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 13px;
+      flex: 1;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-fwd { background: #2d7a2d; color: #fff; }
+    .btn-fwd:hover { background: #3a9a3a; }
+    .btn-stop { background: #555; color: #fff; }
+    .btn-stop:hover { background: #666; }
+    .btn-rev { background: #7a2d2d; color: #fff; }
+    .btn-rev:hover { background: #9a3a3a; }
+    #wheel-info {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.85);
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-family: monospace;
+      min-width: 200px;
+      z-index: 100;
+    }
+    #wheel-info h4 {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: #aaa;
+      text-transform: uppercase;
+    }
+    .wheel-stat {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #333;
+    }
+    .wheel-stat:last-child { border-bottom: none; }
+    .wheel-stat .name { color: #888; }
+    .wheel-stat .val { color: #4a9eff; }
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.9);
+      padding: 30px 50px;
+      border-radius: 12px;
+      text-align: center;
+      z-index: 200;
+    }
+    #loading.hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="viewport" id="view-front">
+      <span class="viewport-label">Front</span>
+    </div>
+    <div class="viewport" id="view-right">
+      <span class="viewport-label">Right</span>
+    </div>
+    <div class="viewport" id="view-rear">
+      <span class="viewport-label">Rear</span>
+    </div>
+    <div class="viewport" id="view-left">
+      <span class="viewport-label">Left</span>
+    </div>
+  </div>
+
+  <div id="controls">
+    <h3>Wheel Animation Test Lab</h3>
+    <div class="control-row">
+      <label>Vehicle</label>
+      <select id="vehicle-select"></select>
+    </div>
+    <div class="control-row">
+      <label>Speed</label>
+      <input type="range" id="speed-slider" min="-50" max="50" value="0" />
+      <span class="value" id="speed-value">0 m/s</span>
+    </div>
+    <div class="control-row">
+      <label>Steering</label>
+      <input type="range" id="steer-slider" min="-100" max="100" value="0" />
+      <span class="value" id="steer-value">0°</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-rev" id="btn-reverse">◀ Reverse</button>
+      <button class="btn btn-stop" id="btn-stop">■ Stop</button>
+      <button class="btn btn-fwd" id="btn-forward">Forward ▶</button>
+    </div>
+  </div>
+
+  <div id="wheel-info">
+    <h4>Wheel Rotation</h4>
+    <div class="wheel-stat"><span class="name">FL</span><span class="val" id="fl-rot">-</span></div>
+    <div class="wheel-stat"><span class="name">FR</span><span class="val" id="fr-rot">-</span></div>
+    <div class="wheel-stat"><span class="name">RL</span><span class="val" id="rl-rot">-</span></div>
+    <div class="wheel-stat"><span class="name">RR</span><span class="val" id="rr-rot">-</span></div>
+    <div class="wheel-stat"><span class="name">Steer Angle</span><span class="val" id="steer-rot">-</span></div>
+  </div>
+
+  <div id="loading">Loading vehicle...</div>
+
+  <script type="module" src="/src/wheelTest.js"></script>
+</body>
+</html>

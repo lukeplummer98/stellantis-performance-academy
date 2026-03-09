@@ -4,8 +4,11 @@
  */
 import * as THREE from 'three';
 
-const MOVE_SPEED = 5;
-const LOOK_SPEED = 0.002;
+const MOVE_SPEED = 3.5;           // Reduced for more natural walking pace
+const LOOK_SPEED = 0.0012;        // Reduced mouse sensitivity
+const LOOK_SMOOTHING = 0.15;      // Smoothing factor for mouse look (0-1, lower = smoother)
+const MOVE_ACCELERATION = 4;     // Acceleration when starting to move
+const MOVE_DECELERATION = 5;     // Deceleration when stopping (lower = smoother stop)
 const PLAYER_HEIGHT = 1.7;
 
 export class CameraController {
@@ -17,6 +20,10 @@ export class CameraController {
     // Euler for pitch/yaw
     this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
     this.euler.setFromQuaternion(camera.quaternion);
+    
+    // Target euler for smooth interpolation
+    this.targetEuler = new THREE.Euler(0, 0, 0, 'YXZ');
+    this.targetEuler.copy(this.euler);
 
     // Movement state
     this.keys = { forward: false, backward: false, left: false, right: false };
@@ -40,13 +47,12 @@ export class CameraController {
       document.body.classList.toggle('pointer-locked', this.isLocked);
     });
 
-    // Mouse move
+    // Mouse move - update target euler (actual camera follows smoothly)
     document.addEventListener('mousemove', (e) => {
       if (!this.isLocked || !this.enabled) return;
-      this.euler.y -= e.movementX * LOOK_SPEED;
-      this.euler.x -= e.movementY * LOOK_SPEED;
-      this.euler.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, this.euler.x));
-      this.camera.quaternion.setFromEuler(this.euler);
+      this.targetEuler.y -= e.movementX * LOOK_SPEED;
+      this.targetEuler.x -= e.movementY * LOOK_SPEED;
+      this.targetEuler.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, this.targetEuler.x));
     });
 
     // Keyboard
@@ -67,19 +73,36 @@ export class CameraController {
   update(delta) {
     if (!this.enabled || !this.isLocked) return;
 
-    // Deceleration
-    this.velocity.x -= this.velocity.x * 8 * delta;
-    this.velocity.z -= this.velocity.z * 8 * delta;
+    // Smooth mouse look interpolation
+    const smoothFactor = 1 - Math.pow(1 - LOOK_SMOOTHING, delta * 60);
+    this.euler.x += (this.targetEuler.x - this.euler.x) * smoothFactor;
+    this.euler.y += (this.targetEuler.y - this.euler.y) * smoothFactor;
+    this.camera.quaternion.setFromEuler(this.euler);
 
     // Movement direction
     this.direction.z = (this.keys.forward ? 1 : 0) - (this.keys.backward ? 1 : 0);
     this.direction.x = (this.keys.left ? 1 : 0) - (this.keys.right ? 1 : 0);
     this.direction.normalize();
 
-    if (this.keys.forward || this.keys.backward)
-      this.velocity.z -= this.direction.z * MOVE_SPEED * delta;
-    if (this.keys.left || this.keys.right)
-      this.velocity.x -= this.direction.x * MOVE_SPEED * delta;
+    // Smooth acceleration/deceleration
+    const isMovingZ = this.keys.forward || this.keys.backward;
+    const isMovingX = this.keys.left || this.keys.right;
+    
+    if (isMovingZ) {
+      // Accelerate toward target velocity
+      const targetVelZ = -this.direction.z * MOVE_SPEED * delta;
+      this.velocity.z += (targetVelZ - this.velocity.z) * MOVE_ACCELERATION * delta;
+    } else {
+      // Decelerate smoothly
+      this.velocity.z -= this.velocity.z * MOVE_DECELERATION * delta;
+    }
+    
+    if (isMovingX) {
+      const targetVelX = -this.direction.x * MOVE_SPEED * delta;
+      this.velocity.x += (targetVelX - this.velocity.x) * MOVE_ACCELERATION * delta;
+    } else {
+      this.velocity.x -= this.velocity.x * MOVE_DECELERATION * delta;
+    }
 
     // Apply movement relative to camera facing direction (Y-locked)
     const forward = new THREE.Vector3();
@@ -127,6 +150,7 @@ export class CameraController {
           requestAnimationFrame(animate);
         } else {
           this.euler.setFromQuaternion(this.camera.quaternion);
+          this.targetEuler.copy(this.euler);
           this.enabled = wasEnabled;
           resolve();
         }
