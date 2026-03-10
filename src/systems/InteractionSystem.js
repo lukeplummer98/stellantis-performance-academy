@@ -80,7 +80,11 @@ export class InteractionSystem {
         break;
       case 'Escape':
         if (this.mode === InteractionMode.DRIVE) {
-          this.stopDriving();
+          // Let the world system handle Escape when in world mode
+          // Only stop driving if not in a world (handled by App._onGlobalKey)
+          if (!window._inWorldMode) {
+            this.stopDriving();
+          }
         }
         break;
     }

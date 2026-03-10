@@ -33,7 +33,7 @@ export class SceneManager {
       60,
       window.innerWidth / window.innerHeight,
       0.1,
-      500
+      2000
     );
     this.camera.position.set(0, 1.7, 8);
 

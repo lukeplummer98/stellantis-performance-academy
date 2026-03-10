@@ -327,3 +327,413 @@ body.pointer-locked {
   display: none;
   text-transform: uppercase;
 }
+
+/* ═════════════════════════════════════════
+   ADAS Overlay
+   ═════════════════════════════════════════ */
+
+#adas-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+  font-family: var(--font-primary);
+}
+
+/* ── Speed / AEB cluster (bottom-left) ── */
+#adas-cluster {
+  position: absolute;
+  bottom: 32px;
+  left: 32px;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+#adas-speed {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+#adas-speed-val {
+  font-size: 56px;
+  font-weight: 200;
+  letter-spacing: -2px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+#adas-speed-unit {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+#adas-limit {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid #ff3333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  margin-bottom: 6px;
+}
+
+#adas-limit-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ff3333;
+}
+
+/* AEB status badge */
+.adas-status {
+  padding: 8px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border: 2px solid transparent;
+  margin-bottom: 10px;
+}
+
+.adas-status.hidden {
+  display: none;
+}
+
+.aeb-warning {
+  background: rgba(255, 170, 0, 0.15);
+  border-color: #ffaa00;
+  color: #ffaa00;
+  animation: aeb-pulse 0.5s ease-in-out infinite alternate;
+}
+
+.aeb-braking {
+  background: rgba(255, 0, 0, 0.25);
+  border-color: #ff3333;
+  color: #ff3333;
+  animation: aeb-flash 0.15s linear infinite alternate;
+}
+
+.aeb-stopped {
+  background: rgba(0, 200, 100, 0.12);
+  border-color: #00cc66;
+  color: #00cc66;
+}
+
+@keyframes aeb-pulse {
+  from { opacity: 1; }
+  to   { opacity: 0.5; }
+}
+
+@keyframes aeb-flash {
+  from { opacity: 1; }
+  to   { opacity: 0.3; }
+}
+
+/* ── Parking sensors (bottom-center) ── */
+#adas-parking {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border);
+  padding: 12px 20px;
+  min-width: 160px;
+}
+
+#adas-parking.hidden {
+  display: none;
+}
+
+.park-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+#park-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.park-car-top, .park-car-bottom {
+  display: flex;
+  gap: 6px;
+}
+
+.park-car-body {
+  width: 48px;
+  height: 30px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  position: relative;
+  margin: 2px 0;
+}
+
+.park-sensor {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.park-sensor.zone-detected { background: #00cc66; border-color: #00cc66; }
+.park-sensor.zone-near     { background: #66dd00; border-color: #66dd00; }
+.park-sensor.zone-close    { background: #ffaa00; border-color: #ffaa00; }
+.park-sensor.zone-vclose   { background: #ff6600; border-color: #ff6600; }
+.park-sensor.zone-danger   { background: #ff0000; border-color: #ff0000; animation: sensor-danger 0.3s linear infinite alternate; }
+
+@keyframes sensor-danger {
+  from { opacity: 1; }
+  to   { opacity: 0.4; }
+}
+
+#park-distance {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+#park-dist-val {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+#park-dist-label {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  letter-spacing: 1px;
+}
+
+/* ── Scenario info (top-center) ── */
+#adas-scenario {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  padding: 10px 28px;
+  border: 1px solid var(--color-border);
+}
+
+#adas-world-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+#adas-objective {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+/* ── Result banner (center) ── */
+#adas-result {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 40px 60px;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(30px);
+  border: 2px solid var(--color-border);
+  min-width: 300px;
+}
+
+#adas-result.hidden {
+  display: none;
+}
+
+.result-success { border-color: #00cc66; }
+.result-fail    { border-color: #ff3333; }
+
+#adas-result-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+.result-success #adas-result-icon { color: #00cc66; }
+.result-fail #adas-result-icon    { color: #ff3333; }
+
+#adas-result-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.result-success #adas-result-title { color: #00cc66; }
+.result-fail #adas-result-title    { color: #ff3333; }
+
+#adas-result-detail {
+  font-size: 13px;
+  color: var(--color-text-dim);
+  line-height: 1.6;
+  white-space: pre-line;
+  margin-bottom: 16px;
+}
+
+#adas-result-action {
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+}
+
+/* ── Portal proximity ── */
+#adas-portal {
+  position: absolute;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 60, 180, 0.25);
+  border: 1px solid rgba(0, 120, 255, 0.5);
+  padding: 10px 24px;
+  animation: portal-hint 1.5s ease-in-out infinite alternate;
+}
+
+#adas-portal.hidden {
+  display: none;
+}
+
+#adas-portal-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #66aaff;
+}
+
+#adas-portal-name {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  color: #fff;
+}
+
+@keyframes portal-hint {
+  from { border-color: rgba(0, 120, 255, 0.3); background: rgba(0, 60, 180, 0.15); }
+  to   { border-color: rgba(0, 120, 255, 0.7); background: rgba(0, 60, 180, 0.35); }
+}
+
+/* ── Mini-map placeholder (top-right) ── */
+#adas-minimap {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 140px;
+  height: 140px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+}
+
+/* ── World selector (shown before driving) ── */
+#world-select {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(20px);
+  z-index: 50;
+}
+
+#world-select.hidden {
+  display: none;
+}
+
+.world-select-inner {
+  text-align: center;
+  max-width: 700px;
+}
+
+.world-select-inner h1 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.world-select-inner p {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--color-text-dim);
+  margin-bottom: 36px;
+}
+
+.world-cards {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.world-card {
+  width: 200px;
+  padding: 28px 20px;
+  border: 1px solid var(--color-border);
+  background: rgba(20, 20, 20, 0.9);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  pointer-events: all;
+}
+
+.world-card:hover {
+  border-color: var(--color-accent);
+  background: rgba(0, 102, 255, 0.08);
+  transform: translateY(-4px);
+}
+
+.world-card .world-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.world-card .world-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.world-card .world-desc {
+  font-size: 10px;
+  color: var(--color-text-dim);
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
