@@ -12,6 +12,7 @@ import { vehicleConfigs } from './vehicleConfig.js';
 import { fixMaterials } from './systems/MaterialFixer.js';
 
 const WHEEL_RADIUS = 0.35;
+const VISUAL_SPIN_SCALE = 0.3; // dampen visual spin so spokes stay visible
 const MAX_STEER_ANGLE = 0.5;
 
 class WheelTestLab {
@@ -56,22 +57,27 @@ class WheelTestLab {
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x1a1a2e);
+      scene.background = new THREE.Color(0x3a3a5e);
 
       // Add ground grid
-      const grid = new THREE.GridHelper(20, 40, 0x444444, 0x333333);
+      const grid = new THREE.GridHelper(20, 40, 0x666666, 0x555555);
       scene.add(grid);
 
       // Add lights
-      const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+      const ambient = new THREE.AmbientLight(0xffffff, 1.2);
       scene.add(ambient);
 
-      const directional = new THREE.DirectionalLight(0xffffff, 1);
+      const directional = new THREE.DirectionalLight(0xffffff, 2);
       directional.position.set(5, 10, 7);
       directional.castShadow = true;
       directional.shadow.mapSize.width = 1024;
       directional.shadow.mapSize.height = 1024;
       scene.add(directional);
+
+      // Fill light from opposite side
+      const fill = new THREE.DirectionalLight(0xffffff, 1);
+      fill.position.set(-5, 5, -7);
+      scene.add(fill);
 
       // Camera
       const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
@@ -212,25 +218,12 @@ class WheelTestLab {
         fixMaterials(model);
 
         // Find wheels - supports multiple naming conventions
+        // Long names checked FIRST to prevent 'frontleftwheel' matching short 'fr'
         this.wheels = { fl: null, fr: null, rl: null, rr: null, all: [] };
         model.traverse((child) => {
           const n = child.name.toLowerCase();
-          // Standard FL/FR/RL/RR naming
-          if (n.includes('fl') && n.includes('wheel')) {
-            this.wheels.fl = child;
-            this.wheels.all.push(child);
-          } else if (n.includes('fr') && n.includes('wheel')) {
-            this.wheels.fr = child;
-            this.wheels.all.push(child);
-          } else if (n.includes('rl') && n.includes('wheel')) {
-            this.wheels.rl = child;
-            this.wheels.all.push(child);
-          } else if (n.includes('rr') && n.includes('wheel')) {
-            this.wheels.rr = child;
-            this.wheels.all.push(child);
-          }
-          // FrontLeft/FrontRight/RearLeft/RearRight convention (e.g. Blender exports)
-          else if (n.includes('frontleft') && n.includes('wheel')) {
+          // FrontLeft/FrontRight/RearLeft/RearRight convention — check FIRST
+          if (n.includes('frontleft') && n.includes('wheel')) {
             this.wheels.fl = child;
             this.wheels.all.push(child);
           } else if (n.includes('frontright') && n.includes('wheel')) {
@@ -243,17 +236,31 @@ class WheelTestLab {
             this.wheels.rr = child;
             this.wheels.all.push(child);
           }
-          // McLaren style: Wheel.Ft.L, Wheel.Ft.R, Wheel.Bk.L, Wheel.Bk.R
-          else if (n.includes('wheel') && n.includes('ft') && n.includes('.l')) {
+          // Short FL/FR/RL/RR naming
+          else if (n.includes('fl') && n.includes('wheel')) {
             this.wheels.fl = child;
             this.wheels.all.push(child);
-          } else if (n.includes('wheel') && n.includes('ft') && n.includes('.r')) {
+          } else if (n.includes('fr') && n.includes('wheel')) {
             this.wheels.fr = child;
             this.wheels.all.push(child);
-          } else if (n.includes('wheel') && n.includes('bk') && n.includes('.l')) {
+          } else if (n.includes('rl') && n.includes('wheel')) {
             this.wheels.rl = child;
             this.wheels.all.push(child);
-          } else if (n.includes('wheel') && n.includes('bk') && n.includes('.r')) {
+          } else if (n.includes('rr') && n.includes('wheel')) {
+            this.wheels.rr = child;
+            this.wheels.all.push(child);
+          }
+          // McLaren style: Wheel.Ft.L, Wheel.Ft.R, Wheel.Bk.L, Wheel.Bk.R
+          else if (n.includes('wheel') && n.includes('.ft.') && n.includes('.l')) {
+            this.wheels.fl = child;
+            this.wheels.all.push(child);
+          } else if (n.includes('wheel') && n.includes('.ft.') && n.includes('.r')) {
+            this.wheels.fr = child;
+            this.wheels.all.push(child);
+          } else if (n.includes('wheel') && n.includes('.bk.') && n.includes('.l')) {
+            this.wheels.rl = child;
+            this.wheels.all.push(child);
+          } else if (n.includes('wheel') && n.includes('.bk.') && n.includes('.r')) {
             this.wheels.rr = child;
             this.wheels.all.push(child);
           }
@@ -274,7 +281,22 @@ class WheelTestLab {
           this.wheels = { fl: null, fr: null, rl: null, rr: null, all: [] };
           firstModel.traverse((child) => {
             const n = child.name.toLowerCase();
-            if (n.includes('fl') && n.includes('wheel')) {
+            // FrontLeft/FrontRight/RearLeft/RearRight — check FIRST
+            if (n.includes('frontleft') && n.includes('wheel')) {
+              this.wheels.fl = child;
+              this.wheels.all.push(child);
+            } else if (n.includes('frontright') && n.includes('wheel')) {
+              this.wheels.fr = child;
+              this.wheels.all.push(child);
+            } else if (n.includes('rearleft') && n.includes('wheel')) {
+              this.wheels.rl = child;
+              this.wheels.all.push(child);
+            } else if (n.includes('rearright') && n.includes('wheel')) {
+              this.wheels.rr = child;
+              this.wheels.all.push(child);
+            }
+            // Short FL/FR/RL/RR naming
+            else if (n.includes('fl') && n.includes('wheel')) {
               this.wheels.fl = child;
               this.wheels.all.push(child);
             } else if (n.includes('fr') && n.includes('wheel')) {
@@ -284,6 +306,20 @@ class WheelTestLab {
               this.wheels.rl = child;
               this.wheels.all.push(child);
             } else if (n.includes('rr') && n.includes('wheel')) {
+              this.wheels.rr = child;
+              this.wheels.all.push(child);
+            }
+            // McLaren style: Wheel.Ft.L, Wheel.Ft.R, Wheel.Bk.L, Wheel.Bk.R
+            else if (n.includes('wheel') && n.includes('.ft.') && n.includes('.l')) {
+              this.wheels.fl = child;
+              this.wheels.all.push(child);
+            } else if (n.includes('wheel') && n.includes('.ft.') && n.includes('.r')) {
+              this.wheels.fr = child;
+              this.wheels.all.push(child);
+            } else if (n.includes('wheel') && n.includes('.bk.') && n.includes('.l')) {
+              this.wheels.rl = child;
+              this.wheels.all.push(child);
+            } else if (n.includes('wheel') && n.includes('.bk.') && n.includes('.r')) {
               this.wheels.rr = child;
               this.wheels.all.push(child);
             }
@@ -304,27 +340,45 @@ class WheelTestLab {
   _updateWheels(delta) {
     if (!this.vehicle) return;
 
-    const angularVelocity = this.speed / WHEEL_RADIUS;
+    const angularVelocity = (this.speed / WHEEL_RADIUS) * VISUAL_SPIN_SCALE;
     this.wheelRotation += angularVelocity * delta;
 
     // Update wheels in all viewports
-    this.viewports.forEach((vp) => {
+    this.viewports.forEach((vp, vpIdx) => {
       const model = vp.scene.getObjectByName(this.vehicle.name);
       if (!model) return;
 
+      // One-time debug: log all wheel nodes found
+      if (!this._debuggedWheels) {
+        this._debuggedWheels = true;
+        const found = [];
+        model.traverse((c) => {
+          if (c.name.toLowerCase().includes('wheel')) found.push(c.name);
+        });
+        console.log('[WheelTest] Wheel nodes in model:', found);
+      }
+
       model.traverse((child) => {
         const n = child.name.toLowerCase();
-        const isFront = n.includes('fl') || n.includes('fr') || (n.includes('ft') && n.includes('wheel'));
-        const isWheel = n.includes('wheel') || n.startsWith('cylinder') || n.includes('rim');
+        // Only match actual wheel nodes — not cylinders, rims, or other parts
+        if (!n.includes('wheel')) return;
 
-        if (isWheel) {
-          // Spin wheel
-          child.rotation.x = this.wheelRotation;
+        const isFront = n.includes('frontleft') || n.includes('frontright')
+          || (n.includes('fl') && !n.includes('rear'))
+          || (n.includes('fr') && !n.includes('rear'))
+          || (n.includes('.ft.') && n.includes('wheel'));
 
-          // Steer front wheels
-          if (isFront) {
-            child.rotation.z = this.steerAngle;
-          }
+        // Use YXZ order so steering (Y) is applied before spin (X)
+        if (isFront && child.rotation.order !== 'YXZ') {
+          child.rotation.order = 'YXZ';
+        }
+
+        // Spin wheel around X axis
+        child.rotation.x = this.wheelRotation;
+
+        // Steer front wheels around Y axis (yaw)
+        if (isFront) {
+          child.rotation.y = this.steerAngle;
         }
       });
     });

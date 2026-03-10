@@ -79,21 +79,30 @@ export class ModelLoader {
           const wheels = { fl: null, fr: null, rl: null, rr: null, all: [] };
           model.traverse((child) => {
             const n = child.name.toLowerCase();
-            // Named FL/FR/RL/RR convention
-            if (n.includes('fl') && n.includes('wheel')) { wheels.fl = child; wheels.all.push(child); }
-            else if (n.includes('fr') && n.includes('wheel')) { wheels.fr = child; wheels.all.push(child); }
-            else if (n.includes('rl') && n.includes('wheel')) { wheels.rl = child; wheels.all.push(child); }
-            else if (n.includes('rr') && n.includes('wheel')) { wheels.rr = child; wheels.all.push(child); }
-            // FrontLeft/FrontRight/RearLeft/RearRight convention (e.g. Blender exports)
-            else if (n.includes('frontleft') && n.includes('wheel')) { wheels.fl = child; wheels.all.push(child); }
+            // FrontLeft/FrontRight/RearLeft/RearRight convention — check FIRST
+            // (prevents 'frontleftwheel' matching short 'fr' pattern)
+            if (n.includes('frontleft') && n.includes('wheel')) { wheels.fl = child; wheels.all.push(child); }
             else if (n.includes('frontright') && n.includes('wheel')) { wheels.fr = child; wheels.all.push(child); }
             else if (n.includes('rearleft') && n.includes('wheel')) { wheels.rl = child; wheels.all.push(child); }
             else if (n.includes('rearright') && n.includes('wheel')) { wheels.rr = child; wheels.all.push(child); }
+            // Short FL/FR/RL/RR convention
+            else if (n.includes('fl') && n.includes('wheel')) { wheels.fl = child; wheels.all.push(child); }
+            else if (n.includes('fr') && n.includes('wheel')) { wheels.fr = child; wheels.all.push(child); }
+            else if (n.includes('rl') && n.includes('wheel')) { wheels.rl = child; wheels.all.push(child); }
+            else if (n.includes('rr') && n.includes('wheel')) { wheels.rr = child; wheels.all.push(child); }
             // McLaren style: Wheel.Ft.L, Wheel.Ft.R, Wheel.Bk.L, Wheel.Bk.R
-            else if (n.includes('wheel') && n.includes('ft') && n.includes('.l')) { wheels.fl = child; wheels.all.push(child); }
-            else if (n.includes('wheel') && n.includes('ft') && n.includes('.r')) { wheels.fr = child; wheels.all.push(child); }
-            else if (n.includes('wheel') && n.includes('bk') && n.includes('.l')) { wheels.rl = child; wheels.all.push(child); }
-            else if (n.includes('wheel') && n.includes('bk') && n.includes('.r')) { wheels.rr = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('.ft.') && n.includes('.l')) { wheels.fl = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('.ft.') && n.includes('.r')) { wheels.fr = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('.bk.') && n.includes('.l')) { wheels.rl = child; wheels.all.push(child); }
+            else if (n.includes('wheel') && n.includes('.bk.') && n.includes('.r')) { wheels.rr = child; wheels.all.push(child); }
+          });
+
+          console.log(`[ModelLoader] ${name} wheels:`, {
+            fl: wheels.fl?.name || 'NOT FOUND',
+            fr: wheels.fr?.name || 'NOT FOUND',
+            rl: wheels.rl?.name || 'NOT FOUND',
+            rr: wheels.rr?.name || 'NOT FOUND',
+            total: wheels.all.length
           });
 
           this.scene.add(model);

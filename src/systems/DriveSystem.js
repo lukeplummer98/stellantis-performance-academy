@@ -13,6 +13,7 @@ const CHASE_DISTANCE = 8;
 const CHASE_HEIGHT = 3;
 const CHASE_SMOOTH = 3;
 const WHEEL_RADIUS = 0.35; // approximate tire radius in meters
+const VISUAL_SPIN_SCALE = 0.3; // dampen visual spin so spokes stay visible
 const MAX_STEER_ANGLE = 0.5; // max front wheel turn angle in radians
 const STEER_RETURN_SPEED = 4; // how fast wheels straighten
 
@@ -64,6 +65,12 @@ export class DriveSystem {
     this.speed = 0;
     this.chassisRotation = this.vehicle.model.rotation.y;
     this.chaseTarget.copy(this.camera.position);
+    console.log('[DriveSystem] Started with wheels:', {
+      fl: this.vehicle.wheels?.fl?.name || 'NOT FOUND',
+      fr: this.vehicle.wheels?.fr?.name || 'NOT FOUND',
+      rl: this.vehicle.wheels?.rl?.name || 'NOT FOUND',
+      rr: this.vehicle.wheels?.rr?.name || 'NOT FOUND',
+    });
   }
 
   stop() {
@@ -116,7 +123,7 @@ export class DriveSystem {
     // Rotate wheels
     const w = this.vehicle.wheels;
     if (w && w.all.length > 0) {
-      const angularVelocity = this.speed / WHEEL_RADIUS;
+      const angularVelocity = (this.speed / WHEEL_RADIUS) * VISUAL_SPIN_SCALE;
 
       // Front wheel steering angle
       let targetSteer = 0;
@@ -124,9 +131,13 @@ export class DriveSystem {
       else if (this.keys.right) targetSteer = -MAX_STEER_ANGLE;
       this.frontWheelAngle += (targetSteer - this.frontWheelAngle) * Math.min(STEER_RETURN_SPEED * delta, 1);
 
-      // Named wheels — rotate + steer front
-      if (w.fl) { w.fl.rotation.x += angularVelocity * delta; w.fl.rotation.z = this.frontWheelAngle; }
-      if (w.fr) { w.fr.rotation.x += angularVelocity * delta; w.fr.rotation.z = this.frontWheelAngle; }
+      // Set YXZ Euler order on front wheels so steer (Y) applies before spin (X)
+      if (w.fl && w.fl.rotation.order !== 'YXZ') w.fl.rotation.order = 'YXZ';
+      if (w.fr && w.fr.rotation.order !== 'YXZ') w.fr.rotation.order = 'YXZ';
+
+      // Named wheels — rotate + steer front (Y-axis = steering yaw)
+      if (w.fl) { w.fl.rotation.x += angularVelocity * delta; w.fl.rotation.y = this.frontWheelAngle; }
+      if (w.fr) { w.fr.rotation.x += angularVelocity * delta; w.fr.rotation.y = this.frontWheelAngle; }
       if (w.rl) { w.rl.rotation.x += angularVelocity * delta; }
       if (w.rr) { w.rr.rotation.x += angularVelocity * delta; }
 
