@@ -9,13 +9,14 @@ const BRAKE_FORCE = 20;
 const MAX_SPEED = 40;
 const TURN_SPEED = 2.5;
 const FRICTION = 4;
-const CHASE_DISTANCE = 8;
-const CHASE_HEIGHT = 3;
+const CHASE_DISTANCE = 5.5;
+const CHASE_HEIGHT = 2.2;
 const CHASE_SMOOTH = 3;
 const WHEEL_RADIUS = 0.35; // approximate tire radius in meters
 const VISUAL_SPIN_SCALE = 0.3; // dampen visual spin so spokes stay visible
 const MAX_STEER_ANGLE = 0.5; // max front wheel turn angle in radians
 const STEER_RETURN_SPEED = 4; // how fast wheels straighten
+const ORBIT_SENSITIVITY = 0.003; // mouse orbit sensitivity while driving
 
 export class DriveSystem {
   constructor(camera) {
@@ -27,10 +28,18 @@ export class DriveSystem {
     this.steerAngle = 0;
     this.frontWheelAngle = 0;
     this.chassisRotation = 0;
+    this.wheelSpinAngle = 0; // accumulated wheel spin
+
+    // Camera orbit around vehicle while driving
+    this.orbitYaw = 0;   // horizontal orbit offset (radians)
+    this.orbitPitch = 0;  // vertical orbit offset (radians)
 
     this.keys = { forward: false, backward: false, left: false, right: false, brake: false };
     this.chaseTarget = new THREE.Vector3();
     this.chaseLookAt = new THREE.Vector3();
+
+    // Store original wheel quaternions for wobble-free rotation
+    this.wheelOriginalQuats = new Map();
 
     this._bindEvents();
   }
@@ -46,6 +55,14 @@ export class DriveSystem {
 
     document.addEventListener('keydown', (e) => this._onKey(e, true));
     document.addEventListener('keyup', (e) => this._onKey(e, false));
+
+    // Mouse orbit while driving
+    document.addEventListener('mousemove', (e) => {
+      if (!this.active) return;
+      this.orbitYaw -= e.movementX * ORBIT_SENSITIVITY;
+      this.orbitPitch -= e.movementY * ORBIT_SENSITIVITY;
+      this.orbitPitch = Math.max(-0.5, Math.min(0.8, this.orbitPitch));
+    });
   }
 
   _onKey(event, pressed) {
@@ -63,14 +80,26 @@ export class DriveSystem {
     this.vehicle = vehicleData;
     this.active = true;
     this.speed = 0;
+    this.wheelSpinAngle = 0;
+    this.orbitYaw = 0;
+    this.orbitPitch = 0;
     this.chassisRotation = this.vehicle.model.rotation.y;
     this.chaseTarget.copy(this.camera.position);
-    console.log('[DriveSystem] Started with wheels:', {
-      fl: this.vehicle.wheels?.fl?.name || 'NOT FOUND',
-      fr: this.vehicle.wheels?.fr?.name || 'NOT FOUND',
-      rl: this.vehicle.wheels?.rl?.name || 'NOT FOUND',
-      rr: this.vehicle.wheels?.rr?.name || 'NOT FOUND',
-    });
+
+    // Cache original wheel quaternions for proper rotation
+    this.wheelOriginalQuats.clear();
+    const w = this.vehicle.wheels;
+    if (w) {
+      console.log('[DriveSystem] Started with wheels:', {
+        fl: w.fl?.name || 'NOT FOUND',
+        fr: w.fr?.name || 'NOT FOUND',
+        rl: w.rl?.name || 'NOT FOUND',
+        rr: w.rr?.name || 'NOT FOUND',
+      });
+      for (const wheel of w.all) {
+        this.wheelOriginalQuats.set(wheel, wheel.quaternion.clone());
+      }
+    }
   }
 
   stop() {
@@ -124,6 +153,7 @@ export class DriveSystem {
     const w = this.vehicle.wheels;
     if (w && w.all.length > 0) {
       const angularVelocity = (this.speed / WHEEL_RADIUS) * VISUAL_SPIN_SCALE;
+      this.wheelSpinAngle += angularVelocity * delta;
 
       // Front wheel steering angle
       let targetSteer = 0;
@@ -131,29 +161,39 @@ export class DriveSystem {
       else if (this.keys.right) targetSteer = -MAX_STEER_ANGLE;
       this.frontWheelAngle += (targetSteer - this.frontWheelAngle) * Math.min(STEER_RETURN_SPEED * delta, 1);
 
-      // Set YXZ Euler order on front wheels so steer (Y) applies before spin (X)
-      if (w.fl && w.fl.rotation.order !== 'YXZ') w.fl.rotation.order = 'YXZ';
-      if (w.fr && w.fr.rotation.order !== 'YXZ') w.fr.rotation.order = 'YXZ';
+      // Use quaternions to avoid Euler wobble issues
+      const spinQuat = new THREE.Quaternion();
+      const steerQuat = new THREE.Quaternion();
+      const xAxis = new THREE.Vector3(1, 0, 0);
+      const yAxis = new THREE.Vector3(0, 1, 0);
+      spinQuat.setFromAxisAngle(xAxis, this.wheelSpinAngle);
+      steerQuat.setFromAxisAngle(yAxis, this.frontWheelAngle);
 
-      // Named wheels — rotate + steer front (Y-axis = steering yaw)
-      if (w.fl) { w.fl.rotation.x += angularVelocity * delta; w.fl.rotation.y = this.frontWheelAngle; }
-      if (w.fr) { w.fr.rotation.x += angularVelocity * delta; w.fr.rotation.y = this.frontWheelAngle; }
-      if (w.rl) { w.rl.rotation.x += angularVelocity * delta; }
-      if (w.rr) { w.rr.rotation.x += angularVelocity * delta; }
-
-      // Legacy unnamed wheels — just spin
-      for (const wheel of w.all) {
-        if (wheel !== w.fl && wheel !== w.fr && wheel !== w.rl && wheel !== w.rr) {
-          wheel.rotation.x += angularVelocity * delta;
+      // Apply to each named wheel directly
+      const applyWheel = (wheel, steer) => {
+        if (!wheel) return;
+        const origQuat = this.wheelOriginalQuats.get(wheel);
+        if (!origQuat) return;
+        if (steer) {
+          wheel.quaternion.copy(origQuat).multiply(steerQuat).multiply(spinQuat);
+        } else {
+          wheel.quaternion.copy(origQuat).multiply(spinQuat);
         }
-      }
+      };
+
+      applyWheel(w.fl, true);   // front left — spin + steer
+      applyWheel(w.fr, true);   // front right — spin + steer
+      applyWheel(w.rl, false);  // rear left — spin only
+      applyWheel(w.rr, false);  // rear right — spin only
     }
 
-    // Chase camera
+    // Chase camera with mouse orbit support
+    const camAngle = this.chassisRotation + Math.PI + this.orbitYaw;
+    const camPitch = this.orbitPitch;
     const idealOffset = new THREE.Vector3(
-      -Math.sin(this.chassisRotation) * CHASE_DISTANCE,
-      CHASE_HEIGHT,
-      -Math.cos(this.chassisRotation) * CHASE_DISTANCE
+      Math.sin(camAngle) * CHASE_DISTANCE * Math.cos(camPitch),
+      CHASE_HEIGHT + Math.sin(camPitch) * CHASE_DISTANCE,
+      Math.cos(camAngle) * CHASE_DISTANCE * Math.cos(camPitch)
     );
     const idealTarget = this.vehicle.model.position.clone().add(idealOffset);
     const idealLookAt = this.vehicle.model.position.clone();

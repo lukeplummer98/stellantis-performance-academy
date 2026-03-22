@@ -20,13 +20,13 @@ export class SceneManager {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = 1.6;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     // Scene
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0a0a);
-    this.scene.fog = new THREE.Fog(0x0a0a0a, 40, 120);
+    this.scene.background = new THREE.Color(0x1a1a2e);
+    this.scene.fog = new THREE.Fog(0x1a1a2e, 60, 150);
 
     // Camera
     this.camera = new THREE.PerspectiveCamera(
@@ -41,16 +41,24 @@ export class SceneManager {
     this._setupGround();
     this._setupEnvironment();
 
+    // Brightness presets: dark, normal, bright
+    this._brightnessLevel = 1; // 0=dark, 1=normal, 2=bright
+    this._brightnessPresets = [
+      { exposure: 1.0, ambient: 0.4, hemi: 0.5, bg: 0x0a0a0a },
+      { exposure: 1.6, ambient: 0.8, hemi: 0.8, bg: 0x1a1a2e },
+      { exposure: 2.2, ambient: 1.4, hemi: 1.2, bg: 0x2a2a40 },
+    ];
+
     window.addEventListener('resize', () => this._onResize());
   }
 
   _setupLighting() {
-    // Ambient — subtle fill
-    const ambient = new THREE.AmbientLight(0x404060, 0.4);
+    // Ambient — fill
+    const ambient = new THREE.AmbientLight(0x8090b0, 0.8);
     this.scene.add(ambient);
 
     // Hemisphere — sky/ground color variation
-    const hemi = new THREE.HemisphereLight(0x6688cc, 0x222222, 0.5);
+    const hemi = new THREE.HemisphereLight(0x88aadd, 0x444444, 0.8);
     this.scene.add(hemi);
 
     // Key light — main directional
@@ -68,12 +76,12 @@ export class SceneManager {
     this.scene.add(key);
 
     // Fill light — opposite side, cooler
-    const fill = new THREE.DirectionalLight(0x4488ff, 0.4);
+    const fill = new THREE.DirectionalLight(0x6699ff, 0.7);
     fill.position.set(-8, 10, -6);
     this.scene.add(fill);
 
     // Rim light — back edge highlight
-    const rim = new THREE.DirectionalLight(0xff6633, 0.3);
+    const rim = new THREE.DirectionalLight(0xff8855, 0.5);
     rim.position.set(0, 5, -15);
     this.scene.add(rim);
 
@@ -91,7 +99,7 @@ export class SceneManager {
     // Showroom floor — large reflective-looking surface
     const groundGeo = new THREE.PlaneGeometry(200, 200);
     const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x111111,
+      color: 0x222233,
       metalness: 0.3,
       roughness: 0.6,
     });
@@ -142,5 +150,20 @@ export class SceneManager {
 
   render() {
     this.renderer.render(this.scene, this.camera);
+  }
+
+  cycleBrightness() {
+    this._brightnessLevel = (this._brightnessLevel + 1) % this._brightnessPresets.length;
+    const p = this._brightnessPresets[this._brightnessLevel];
+    this.renderer.toneMappingExposure = p.exposure;
+    this.scene.background.setHex(p.bg);
+    if (this.scene.fog) this.scene.fog.color.setHex(p.bg);
+    // Update ambient and hemisphere lights
+    this.scene.traverse((child) => {
+      if (child.isAmbientLight) child.intensity = p.ambient;
+      if (child.isHemisphereLight) child.intensity = p.hemi;
+    });
+    const labels = ['DARK', 'NORMAL', 'BRIGHT'];
+    return labels[this._brightnessLevel];
   }
 }

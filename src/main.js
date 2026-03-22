@@ -48,6 +48,15 @@ class App {
     this.inWorld = false;
     this.portalCooldown = 0; // prevent rapid portal re-entry
 
+    // Brightness toggle
+    const brightnessBtn = document.getElementById('brightness-toggle');
+    if (brightnessBtn) {
+      brightnessBtn.addEventListener('click', () => {
+        const level = this.scene.cycleBrightness();
+        brightnessBtn.textContent = `☀ ${level}`;
+      });
+    }
+
     // Add crosshair element
     this._createCrosshair();
 

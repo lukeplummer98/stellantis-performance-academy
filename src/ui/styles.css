@@ -105,6 +105,8 @@ html, body {
 #hud-bottom {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 12px;
 }
 
 #controls-hint {
@@ -116,6 +118,24 @@ html, body {
   padding: 8px 20px;
   backdrop-filter: blur(8px);
   border: 1px solid var(--color-border);
+}
+
+#brightness-toggle {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 14px;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+#brightness-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
 }
 
 /* ─── Panels ─── */
