@@ -155,6 +155,11 @@ class App {
             <div class="world-title">Charging Station</div>
             <div class="world-desc">Park in the EV bay, grab the charger off the rack, plug in and watch the electric flow demo.</div>
           </div>
+          <div class="world-card" data-world="${WorldId.CHARGING_STATION_V2}">
+            <div class="world-icon">🔌</div>
+            <div class="world-title">Charging V2 — Flexi Wire</div>
+            <div class="world-desc">Realtime rope physics — drag the cable and watch it drape and sag with live Verlet simulation.</div>
+          </div>
         </div>
       </div>
     `;
@@ -266,23 +271,25 @@ class App {
         this.adasSystem.setSpeedLimit(20);
       } else if (targetWorldId === WorldId.SUPERMARKET) {
         this.adasSystem.setSpeedLimit(5);
-      } else if (targetWorldId === WorldId.CHARGING_STATION) {
+      } else if (targetWorldId === WorldId.CHARGING_STATION || targetWorldId === WorldId.CHARGING_STATION_V2) {
         this.adasSystem.setSpeedLimit(10);
       } else {
         this.adasSystem.setSpeedLimit(75);
       }
 
       const worldNames = {
-        [WorldId.TEST_TRACK]:       'TEST TRACK',
-        [WorldId.CITY_STREET]:      'CITY STREET',
-        [WorldId.SUPERMARKET]:      'SUPERMARKET',
-        [WorldId.CHARGING_STATION]: 'CHARGING STATION',
+        [WorldId.TEST_TRACK]:          'TEST TRACK',
+        [WorldId.CITY_STREET]:         'CITY STREET',
+        [WorldId.SUPERMARKET]:         'SUPERMARKET',
+        [WorldId.CHARGING_STATION]:    'CHARGING STATION',
+        [WorldId.CHARGING_STATION_V2]: 'CHARGING V2 — FLEXI WIRE',
       };
       const objectives = {
-        [WorldId.TEST_TRACK]:       'FREE DRIVE — EXPLORE AND HIT TOP SPEED',
-        [WorldId.CITY_STREET]:      'AEB DEMO — DRIVE TOWARD THE CROSSING',
-        [WorldId.SUPERMARKET]:      'REVERSE INTO THE HIGHLIGHTED BAY',
-        [WorldId.CHARGING_STATION]: 'PARK IN THE EV BAY — PRESS E TO CHARGE',
+        [WorldId.TEST_TRACK]:          'FREE DRIVE — EXPLORE AND HIT TOP SPEED',
+        [WorldId.CITY_STREET]:         'AEB DEMO — DRIVE TOWARD THE CROSSING',
+        [WorldId.SUPERMARKET]:         'REVERSE INTO THE HIGHLIGHTED BAY',
+        [WorldId.CHARGING_STATION]:    'PARK IN THE EV BAY — PRESS E TO CHARGE',
+        [WorldId.CHARGING_STATION_V2]: 'DRAG THE FLEXI-CABLE TO CHARGE PORT',
       };
       this.adasOverlay.setWorldInfo(worldNames[targetWorldId] || targetWorldId, objectives[targetWorldId] || '');
       this.adasOverlay.hideResult();

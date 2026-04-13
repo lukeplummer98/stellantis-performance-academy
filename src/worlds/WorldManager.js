@@ -13,12 +13,14 @@ import { TestTrackWorld } from './TestTrackWorld.js';
 import { CityStreetWorld } from './CityStreetWorld.js';
 import { SupermarketWorld } from './SupermarketWorld.js';
 import { ChargingStationWorld } from './ChargingStationWorld.js';
+import { ChargingStationWorldV2 } from './ChargingStationWorldV2.js';
 
 export const WorldId = {
-  TEST_TRACK:       'test-track',
-  CITY_STREET:      'city-street',
-  SUPERMARKET:      'supermarket',
-  CHARGING_STATION: 'charging-station',
+  TEST_TRACK:          'test-track',
+  CITY_STREET:         'city-street',
+  SUPERMARKET:         'supermarket',
+  CHARGING_STATION:    'charging-station',
+  CHARGING_STATION_V2: 'charging-station-v2',
 };
 
 export class WorldManager {
@@ -35,10 +37,11 @@ export class WorldManager {
 
     // Register world builders
     this.worldBuilders = {
-      [WorldId.TEST_TRACK]:       TestTrackWorld,
-      [WorldId.CITY_STREET]:      CityStreetWorld,
-      [WorldId.SUPERMARKET]:      SupermarketWorld,
-      [WorldId.CHARGING_STATION]: ChargingStationWorld,
+      [WorldId.TEST_TRACK]:          TestTrackWorld,
+      [WorldId.CITY_STREET]:         CityStreetWorld,
+      [WorldId.SUPERMARKET]:         SupermarketWorld,
+      [WorldId.CHARGING_STATION]:    ChargingStationWorld,
+      [WorldId.CHARGING_STATION_V2]: ChargingStationWorldV2,
     };
   }
 
