@@ -5,6 +5,7 @@
  * Vehicle spawns in a world; drive through portals to switch environments.
  */
 import * as THREE from 'three';
+import Stats from 'stats.js';
 import { SceneManager } from './systems/SceneManager.js';
 import { ModelLoader } from './systems/ModelLoader.js';
 import { CameraController } from './systems/CameraController.js';
@@ -17,11 +18,20 @@ import { ADASOverlay } from './ui/ADASOverlay.js';
 import { vehicleConfigs } from './vehicleConfig.js';
 import { WorldManager, WorldId } from './worlds/WorldManager.js';
 import { ADASSystem } from './systems/ADASSystem.js';
+import { EditModeSystem } from './systems/EditModeSystem.js';
 
 class App {
   constructor() {
     this.canvas = document.getElementById('canvas');
     this.hud = new HUDManager();
+
+    // Performance stats (FPS / MS / MB)
+    this.stats = new Stats();
+    this.stats.showPanel(0); // 0=FPS, 1=MS, 2=MB
+    this.stats.dom.style.position = 'fixed';
+    this.stats.dom.style.top = '0px';
+    this.stats.dom.style.left = '0px';
+    document.body.appendChild(this.stats.dom);
 
     // Core scene
     this.scene = new SceneManager(this.canvas);
@@ -43,6 +53,7 @@ class App {
     this.worldManager = new WorldManager(this.scene.scene, this.scene.camera);
     this.adasSystem = new ADASSystem();
     this.adasOverlay = new ADASOverlay();
+    this.editMode = new EditModeSystem(this.scene.camera, this.scene.scene);
 
     // Track world state
     this.inWorld = false;
@@ -139,6 +150,11 @@ class App {
             <div class="world-title">Supermarket</div>
             <div class="world-desc">Car park with reverse parking challenge. Sensors guide you into a tight bay.</div>
           </div>
+          <div class="world-card" data-world="${WorldId.CHARGING_STATION}">
+            <div class="world-icon">⚡</div>
+            <div class="world-title">Charging Station</div>
+            <div class="world-desc">Park in the EV bay, grab the charger off the rack, plug in and watch the electric flow demo.</div>
+          </div>
         </div>
       </div>
     `;
@@ -172,6 +188,9 @@ class App {
 
     // Load world
     const { spawnPos, spawnRot } = this.worldManager.loadWorld(worldId, vehicleData.model);
+
+    // Register editable objects for any world that exposes them
+    this._registerEditables();
 
     // Position vehicle at spawn
     vehicleData.model.position.copy(spawnPos);
@@ -229,6 +248,9 @@ class App {
     setTimeout(() => {
       const { spawnPos, spawnRot } = this.worldManager.loadWorld(targetWorldId, vehicleData.model);
 
+      // Register editable objects for the new world
+      this._registerEditables();
+
       vehicleData.model.position.copy(spawnPos);
       vehicleData.model.rotation.y = spawnRot;
       vehicleData.center.copy(spawnPos);
@@ -241,22 +263,26 @@ class App {
       // Update ADAS
       this.adasSystem.reset();
       if (targetWorldId === WorldId.CITY_STREET) {
-        this.adasSystem.setSpeedLimit(30);
+        this.adasSystem.setSpeedLimit(20);
       } else if (targetWorldId === WorldId.SUPERMARKET) {
+        this.adasSystem.setSpeedLimit(5);
+      } else if (targetWorldId === WorldId.CHARGING_STATION) {
         this.adasSystem.setSpeedLimit(10);
       } else {
-        this.adasSystem.setSpeedLimit(120);
+        this.adasSystem.setSpeedLimit(75);
       }
 
       const worldNames = {
-        [WorldId.TEST_TRACK]: 'TEST TRACK',
-        [WorldId.CITY_STREET]: 'CITY STREET',
-        [WorldId.SUPERMARKET]: 'SUPERMARKET',
+        [WorldId.TEST_TRACK]:       'TEST TRACK',
+        [WorldId.CITY_STREET]:      'CITY STREET',
+        [WorldId.SUPERMARKET]:      'SUPERMARKET',
+        [WorldId.CHARGING_STATION]: 'CHARGING STATION',
       };
       const objectives = {
-        [WorldId.TEST_TRACK]: 'FREE DRIVE — EXPLORE AND HIT TOP SPEED',
-        [WorldId.CITY_STREET]: 'AEB DEMO — DRIVE TOWARD THE CROSSING',
-        [WorldId.SUPERMARKET]: 'REVERSE INTO THE HIGHLIGHTED BAY',
+        [WorldId.TEST_TRACK]:       'FREE DRIVE — EXPLORE AND HIT TOP SPEED',
+        [WorldId.CITY_STREET]:      'AEB DEMO — DRIVE TOWARD THE CROSSING',
+        [WorldId.SUPERMARKET]:      'REVERSE INTO THE HIGHLIGHTED BAY',
+        [WorldId.CHARGING_STATION]: 'PARK IN THE EV BAY — PRESS E TO CHARGE',
       };
       this.adasOverlay.setWorldInfo(worldNames[targetWorldId] || targetWorldId, objectives[targetWorldId] || '');
       this.adasOverlay.hideResult();
@@ -298,6 +324,23 @@ class App {
     if (event.code === 'Escape' && this.inWorld) {
       this._returnToWorldSelect();
     }
+  }
+
+  /** Register editable objects from the current world into EditModeSystem */
+  _registerEditables() {
+    // Clear existing registrations
+    this.editMode._objects.clear();
+
+    const world = this.worldManager.currentWorld;
+    if (!world || typeof world.getEditableObjects !== 'function') return;
+
+    const editables = world.getEditableObjects();
+    editables.forEach((object, name) => {
+      this.editMode.register(name, object);
+    });
+
+    // Refresh dropdown
+    this.editMode._populateObjectSelector();
   }
 
   _returnToWorldSelect() {
@@ -369,6 +412,7 @@ class App {
   }
 
   _loop() {
+    this.stats.begin();
     requestAnimationFrame(() => this._loop());
 
     const delta = this.scene.clock.getDelta();
@@ -432,6 +476,7 @@ class App {
 
     // Render
     this.scene.render();
+    this.stats.end();
   }
 }
 

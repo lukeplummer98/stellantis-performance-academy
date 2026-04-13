@@ -668,6 +668,116 @@ body.pointer-locked {
   to   { border-color: rgba(0, 120, 255, 0.7); background: rgba(0, 60, 180, 0.35); }
 }
 
+/* ── Camera mode button ── */
+#cam-mode-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  z-index: 120;
+  backdrop-filter: blur(6px);
+}
+#cam-mode-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+#cam-mode-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+#cam-mode-icon {
+  font-size: 14px;
+}
+
+/* ── Battery HUD (charging world) ── */
+#battery-hud {
+  position: fixed;
+  bottom: 80px;
+  right: 28px;
+  width: 200px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+  z-index: 120;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+#battery-hud.hidden {
+  display: none;
+}
+.battery-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #00ff88;
+}
+.battery-bar-outer {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.battery-bar-fill {
+  height: 100%;
+  width: 12%;
+  background: hsl(40, 100%, 45%);
+  box-shadow: 0 0 8px hsl(40, 100%, 55%);
+  transition: width 0.3s ease, background 0.3s ease;
+  border-radius: 2px;
+}
+.battery-pct {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  pointer-events: none;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+.battery-status {
+  font-size: 10px;
+  color: #aaaaaa;
+  letter-spacing: 1px;
+  text-align: center;
+}
+.battery-segments {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.batt-seg {
+  width: 28px;
+  height: 10px;
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.5);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.batt-seg.filled {
+  background: #00ff88;
+  box-shadow: 0 0 6px #00ff88;
+}
+
 /* ── Mini-map placeholder (top-right) ── */
 #adas-minimap {
   position: absolute;
@@ -756,4 +866,184 @@ body.pointer-locked {
   color: var(--color-text-dim);
   letter-spacing: 1px;
   line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════
+   Edit Mode System
+   ═══════════════════════════════════════ */
+
+#edit-mode-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 60;
+  background: rgba(10, 10, 20, 0.88);
+  color: #aabbcc;
+  border: 1px solid #334;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
+  pointer-events: all;
+}
+
+#edit-mode-btn:hover {
+  border-color: #ffaa00;
+  color: #ffcc44;
+  background: rgba(20, 15, 0, 0.92);
+}
+
+#edit-mode-btn.edit-mode-active {
+  border-color: #ffaa00;
+  color: #ffdd66;
+  background: rgba(60, 40, 0, 0.92);
+  box-shadow: 0 0 12px rgba(255, 170, 0, 0.3);
+}
+
+#edit-mode-panel {
+  position: fixed;
+  bottom: 70px;
+  right: 24px;
+  z-index: 60;
+  width: 280px;
+  background: rgba(8, 8, 16, 0.96);
+  border: 1px solid #ffaa00;
+  backdrop-filter: blur(16px);
+  color: #e0e0e8;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.15);
+  pointer-events: all;
+}
+
+.emp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 170, 0, 0.1);
+  border-bottom: 1px solid rgba(255, 170, 0, 0.25);
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #ffcc44;
+  font-size: 10px;
+}
+
+.emp-header button {
+  background: none;
+  border: none;
+  color: #ffcc44;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.emp-header button:hover { color: #fff; }
+
+.emp-section {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.emp-label {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #667;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.emp-row {
+  display: flex;
+  gap: 6px;
+}
+
+.emp-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.emp-field span {
+  font-size: 9px;
+  color: #ffaa00;
+  letter-spacing: 1px;
+  min-width: 16px;
+}
+
+.emp-field input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #223;
+  color: #e0e0e8;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  padding: 4px 6px;
+  width: 0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.emp-field input:focus {
+  border-color: #ffaa00;
+}
+
+#emp-object-select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #223;
+  color: #e0e0e8;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 10px;
+  padding: 5px 8px;
+  outline: none;
+  cursor: pointer;
+}
+
+#emp-object-select:focus { border-color: #ffaa00; }
+
+.emp-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.emp-actions button {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #334;
+  color: #aabbcc;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 7px 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.emp-actions button:hover {
+  border-color: #ffaa00;
+  color: #ffcc44;
+}
+
+.emp-saved-msg {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #00ff88;
+  letter-spacing: 2px;
+}
+
+.emp-hint {
+  padding: 8px 14px;
+  font-size: 9px;
+  color: #445;
+  letter-spacing: 1px;
+  line-height: 1.5;
 }
