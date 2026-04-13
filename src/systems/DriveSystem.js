@@ -9,14 +9,17 @@ const BRAKE_FORCE = 20;
 const MAX_SPEED = 40;
 const TURN_SPEED = 2.5;
 const FRICTION = 4;
-const CHASE_DISTANCE = 5.5;
-const CHASE_HEIGHT = 2.2;
-const CHASE_SMOOTH = 3;
+const CHASE_DISTANCE = 8;
+const CHASE_HEIGHT = 3;
+const CHASE_SMOOTH = 6;
 const WHEEL_RADIUS = 0.35; // approximate tire radius in meters
 const VISUAL_SPIN_SCALE = 0.3; // dampen visual spin so spokes stay visible
 const MAX_STEER_ANGLE = 0.5; // max front wheel turn angle in radians
 const STEER_RETURN_SPEED = 4; // how fast wheels straighten
 const ORBIT_SENSITIVITY = 0.003; // mouse orbit sensitivity while driving
+
+export const CamMode = { CHASE: 'CHASE', HOOD: 'HOOD', CINEMATIC: 'CINEMATIC' };
+const CAM_MODES = [CamMode.CHASE, CamMode.HOOD, CamMode.CINEMATIC];
 
 export class DriveSystem {
   constructor(camera) {
@@ -41,6 +44,20 @@ export class DriveSystem {
     // Store original wheel quaternions for wobble-free rotation
     this.wheelOriginalQuats = new Map();
 
+    // Camera modes
+    this.camModeIndex = 0;
+    this.camMode = CamMode.CHASE;
+    this.cinematicAngle = 0;
+    this.cinematicRadius = 10;
+    this.cinematicHeight = 2.5;
+    this.cinematicTarget = new THREE.Vector3();
+    this.cinematicLookAt = new THREE.Vector3();
+
+    // Camera right-click drag yaw
+    this.cameraYawOffset = 0;
+    this._mouseDragging = false;
+    this._lastMouseX = 0;
+
     this._bindEvents();
   }
 
@@ -56,13 +73,17 @@ export class DriveSystem {
     document.addEventListener('keydown', (e) => this._onKey(e, true));
     document.addEventListener('keyup', (e) => this._onKey(e, false));
 
-    // Mouse orbit while driving
-    document.addEventListener('mousemove', (e) => {
-      if (!this.active) return;
-      this.orbitYaw -= e.movementX * ORBIT_SENSITIVITY;
-      this.orbitPitch -= e.movementY * ORBIT_SENSITIVITY;
-      this.orbitPitch = Math.max(-0.5, Math.min(0.8, this.orbitPitch));
-    });
+    window.addEventListener('cam-cycle', () => this.cycleCamMode());
+    document.addEventListener('mousedown',    (e) => this._onMouseDown(e));
+    document.addEventListener('mousemove',    (e) => this._onMouseMove(e));
+    document.addEventListener('mouseup',      (e) => this._onMouseUp(e));
+    document.addEventListener('contextmenu',  (e) => { if (this.active) e.preventDefault(); });
+  }
+
+  cycleCamMode() {
+    this.camModeIndex = (this.camModeIndex + 1) % CAM_MODES.length;
+    this.camMode = CAM_MODES[this.camModeIndex];
+    window.dispatchEvent(new CustomEvent('cam-mode-changed', { detail: { mode: this.camMode } }));
   }
 
   _onKey(event, pressed) {
@@ -73,7 +94,29 @@ export class DriveSystem {
       case 'KeyA': case 'ArrowLeft': this.keys.left = pressed; break;
       case 'KeyD': case 'ArrowRight': this.keys.right = pressed; break;
       case 'Space': this.keys.brake = pressed; break;
+      case 'KeyV': if (pressed) this.cycleCamMode(); break;
     }
+  }
+
+  _onMouseDown(e) {
+    if (!this.active || this.camMode !== CamMode.CHASE) return;
+    if (e.button === 2) {
+      e.preventDefault();
+      this._mouseDragging = true;
+      this._lastMouseX = e.clientX;
+    }
+  }
+
+  _onMouseMove(e) {
+    if (!this._mouseDragging) return;
+    const dx = e.clientX - this._lastMouseX;
+    this._lastMouseX = e.clientX;
+    this.cameraYawOffset -= dx * 0.006;
+    this.cameraYawOffset = Math.max(-Math.PI * 0.85, Math.min(Math.PI * 0.85, this.cameraYawOffset));
+  }
+
+  _onMouseUp(e) {
+    if (e.button === 2) this._mouseDragging = false;
   }
 
   start(vehicleData) {
@@ -85,6 +128,10 @@ export class DriveSystem {
     this.orbitPitch = 0;
     this.chassisRotation = this.vehicle.model.rotation.y;
     this.chaseTarget.copy(this.camera.position);
+
+    this.camModeIndex = 0;
+    this.camMode = CamMode.CHASE;
+    this.cinematicAngle = 0;
 
     // Cache original wheel quaternions for proper rotation
     this.wheelOriginalQuats.clear();
@@ -187,22 +234,66 @@ export class DriveSystem {
       applyWheel(w.rr, false);  // rear right — spin only
     }
 
-    // Chase camera with mouse orbit support
-    const camAngle = this.chassisRotation + Math.PI + this.orbitYaw;
-    const camPitch = this.orbitPitch;
-    const idealOffset = new THREE.Vector3(
-      Math.sin(camAngle) * CHASE_DISTANCE * Math.cos(camPitch),
-      CHASE_HEIGHT + Math.sin(camPitch) * CHASE_DISTANCE,
-      Math.cos(camAngle) * CHASE_DISTANCE * Math.cos(camPitch)
-    );
-    const idealTarget = this.vehicle.model.position.clone().add(idealOffset);
-    const idealLookAt = this.vehicle.model.position.clone();
-    idealLookAt.y += 1;
+    // ── Camera modes ──────────────────────────────────────────────
+    // Clamp delta to 50ms max so a single heavy frame can't snap the camera
+    const camDelta = Math.min(delta, 0.05);
+    const pos = this.vehicle.model.position;
 
-    this.chaseTarget.lerp(idealTarget, CHASE_SMOOTH * delta);
-    this.chaseLookAt.lerp(idealLookAt, CHASE_SMOOTH * delta);
+    if (this.camMode === CamMode.CHASE) {
+      // Spring yaw back to centre when not dragging
+      if (!this._mouseDragging) {
+        this.cameraYawOffset *= Math.pow(0.005, camDelta);
+      }
+      // Chase camera with optional right-click yaw offset
+      const camYaw = this.chassisRotation + this.cameraYawOffset;
+      const idealOffset = new THREE.Vector3(
+        -Math.sin(camYaw) * CHASE_DISTANCE,
+        CHASE_HEIGHT,
+        -Math.cos(camYaw) * CHASE_DISTANCE
+      );
+      const idealTarget = pos.clone().add(idealOffset);
+      const idealLookAt = pos.clone();
+      idealLookAt.y += 1;
 
-    this.camera.position.copy(this.chaseTarget);
-    this.camera.lookAt(this.chaseLookAt);
+      const t = 1 - Math.exp(-CHASE_SMOOTH * camDelta);
+      this.chaseTarget.lerp(idealTarget, t);
+      this.chaseLookAt.lerp(idealLookAt, t);
+
+      this.camera.position.copy(this.chaseTarget);
+      this.camera.lookAt(this.chaseLookAt);
+
+    } else if (this.camMode === CamMode.HOOD) {
+      // Hood / bonnet cam — sits on the front of the car looking forward
+      const forward = new THREE.Vector3(Math.sin(this.chassisRotation), 0, Math.cos(this.chassisRotation));
+      const hoodPos = pos.clone()
+        .addScaledVector(forward, 1.8)   // push to front
+        .add(new THREE.Vector3(0, 1.05, 0));  // hood height
+      const lookAhead = hoodPos.clone().addScaledVector(forward, 30);
+      lookAhead.y = hoodPos.y - 0.2;
+
+      const ht = 1 - Math.exp(-CHASE_SMOOTH * camDelta);
+      this.camera.position.lerp(hoodPos, ht);
+      this.chaseLookAt.lerp(lookAhead, ht);
+      this.camera.lookAt(this.chaseLookAt);
+
+    } else if (this.camMode === CamMode.CINEMATIC) {
+      // Slowly orbiting dramatic cinematic camera
+      this.cinematicAngle += 0.25 * delta;
+
+      // Vary radius and height with a slow sine for drama
+      const r = 11 + Math.sin(this.cinematicAngle * 0.6) * 3;
+      const h = 1.8 + Math.sin(this.cinematicAngle * 0.4) * 1.2;
+
+      const cx = pos.x + Math.sin(this.cinematicAngle) * r;
+      const cz = pos.z + Math.cos(this.cinematicAngle) * r;
+      const idealCinematic = new THREE.Vector3(cx, pos.y + h, cz);
+      const idealLookAt = pos.clone().add(new THREE.Vector3(0, 0.8, 0));
+
+      this.cinematicTarget.lerp(idealCinematic, 4 * delta);
+      this.cinematicLookAt.lerp(idealLookAt, 6 * delta);
+
+      this.camera.position.copy(this.cinematicTarget);
+      this.camera.lookAt(this.cinematicLookAt);
+    }
   }
 }

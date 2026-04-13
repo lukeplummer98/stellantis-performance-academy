@@ -59,11 +59,13 @@ export class ModelLoader {
           model.scale.setScalar(scale);
           model.rotation.y = rotation;
 
-          // Enable shadows on all meshes
+          // Only cast shadows from large exterior meshes to keep draw calls low.
+          // Compute per-mesh bounding sphere and skip shadow casting on small parts.
           model.traverse((child) => {
             if (child.isMesh) {
-              child.castShadow = true;
               child.receiveShadow = true;
+              if (!child.geometry.boundingSphere) child.geometry.computeBoundingSphere();
+              child.castShadow = child.geometry.boundingSphere.radius > 0.4;
             }
           });
 

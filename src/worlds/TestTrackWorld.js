@@ -315,8 +315,9 @@ export class TestTrackWorld {
 
   getPortalPositions() {
     return [
-      { x: -40, z: 50, targetWorld: WorldId.CITY_STREET, label: 'CITY — AEB TEST', color: 0xff4400 },
-      { x: 40, z: 50, targetWorld: WorldId.SUPERMARKET, label: 'SUPERMARKET — PARKING', color: 0x00cc66 },
+      { x: -40, z: 50, targetWorld: WorldId.CITY_STREET,      label: 'CITY — AEB TEST',         color: 0xff4400 },
+      { x:  40, z: 50, targetWorld: WorldId.SUPERMARKET,      label: 'SUPERMARKET — PARKING',    color: 0x00cc66 },
+      { x:   0, z: 75, targetWorld: WorldId.CHARGING_STATION, label: 'CHARGING STATION',         color: 0x00ff88 },
     ];
   }
 

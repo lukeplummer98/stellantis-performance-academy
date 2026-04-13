@@ -109,7 +109,7 @@ export class ADASSystem {
     if (!this.enabled || !driveSystem || !driveSystem.active) return;
 
     const speed = driveSystem.speed;
-    this.speedKmh = Math.abs(speed) * 3.6; // m/s to km/h
+    this.speedKmh = Math.abs(speed) * 2.237; // m/s to mph
 
     if (!scenarioState || !vehiclePos) return;
 
@@ -275,7 +275,7 @@ export class ADASSystem {
    */
   getHUDState() {
     return {
-      speedKmh: this.speedKmh,
+      speedMph: this.speedKmh,
       speedLimit: this.speedLimit,
       aebState: this.aebState,
       timeToCollision: this.timeToCollision,

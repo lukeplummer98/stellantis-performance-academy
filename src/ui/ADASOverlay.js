@@ -24,7 +24,7 @@ export class ADASOverlay {
       <div id="adas-cluster">
         <div id="adas-speed">
           <span id="adas-speed-val">0</span>
-          <span id="adas-speed-unit">km/h</span>
+          <span id="adas-speed-unit">mph</span>
         </div>
         <div id="adas-limit">
           <span id="adas-limit-val">50</span>
@@ -75,9 +75,45 @@ export class ADASOverlay {
         <span id="adas-portal-label">APPROACHING PORTAL</span>
         <span id="adas-portal-name"></span>
       </div>
+
+      <!-- Camera mode button (bottom-right) -->
+      <button id="cam-mode-btn" title="Cycle camera (V)">
+        <span id="cam-mode-icon">🎥</span>
+        <span id="cam-mode-label">CHASE</span>
+      </button>
+
+      <!-- Battery HUD (charging world only) -->
+      <div id="battery-hud" class="hidden">
+        <div class="battery-title">⚡ BATTERY</div>
+        <div class="battery-bar-outer">
+          <div class="battery-bar-fill" id="battery-fill"></div>
+          <span class="battery-pct" id="battery-pct">12%</span>
+        </div>
+        <div class="battery-status" id="battery-status">Park in the EV bay</div>
+        <div class="battery-segments">
+          <div class="batt-seg" id="bseg-0"></div>
+          <div class="batt-seg" id="bseg-1"></div>
+          <div class="batt-seg" id="bseg-2"></div>
+          <div class="batt-seg" id="bseg-3"></div>
+          <div class="batt-seg" id="bseg-4"></div>
+        </div>
+      </div>
     `;
 
     document.getElementById('app').appendChild(this.container);
+
+    // Camera mode button click → dispatch cycling event
+    const btn = document.getElementById('cam-mode-btn');
+    if (btn) btn.addEventListener('click', () => window.dispatchEvent(new Event('cam-cycle')));
+
+    // Listen for mode changes to update label
+    window.addEventListener('cam-mode-changed', (e) => {
+      const icons = { CHASE: '🎥', HOOD: '🚗', CINEMATIC: '🎬' };
+      const labelEl = document.getElementById('cam-mode-label');
+      const iconEl = document.getElementById('cam-mode-icon');
+      if (labelEl) labelEl.textContent = e.detail.mode;
+      if (iconEl) iconEl.textContent = icons[e.detail.mode] || '🎥';
+    });
   }
 
   /**
@@ -88,7 +124,7 @@ export class ADASOverlay {
 
     // Speed
     const speedEl = document.getElementById('adas-speed-val');
-    if (speedEl) speedEl.textContent = Math.round(adasState.speedKmh);
+    if (speedEl) speedEl.textContent = Math.round(adasState.speedMph);
 
     // Speed limit
     const limitEl = document.getElementById('adas-limit-val');
@@ -153,6 +189,43 @@ export class ADASOverlay {
       }
       if (scenarioState.type === 'aeb' && scenarioState.result === 'hit') {
         this.showResult('fail', 'COLLISION!', 'The AEB system failed to stop in time.\nTry approaching at a lower speed.');
+      }
+    }
+
+    // Battery HUD (charging world)
+    const battEl = document.getElementById('battery-hud');
+    if (battEl) {
+      if (scenarioState?.type === 'charging') {
+        battEl.classList.remove('hidden');
+
+        const lvl = scenarioState.batteryLevel ?? 0;
+        const fillEl  = document.getElementById('battery-fill');
+        const pctEl   = document.getElementById('battery-pct');
+        const statEl  = document.getElementById('battery-status');
+
+        if (fillEl) {
+          fillEl.style.width = `${lvl}%`;
+          const hue = (lvl / 100) * 120; // red → green
+          fillEl.style.background = `hsl(${hue}, 100%, 45%)`;
+          fillEl.style.boxShadow  = `0 0 8px hsl(${hue}, 100%, 55%)`;
+        }
+        if (pctEl) pctEl.textContent = `${Math.round(lvl)}%`;
+
+        if (statEl) {
+          if (scenarioState.state === 'charging')  statEl.textContent = '⚡ CHARGING...';
+          else if (scenarioState.state === 'complete') statEl.textContent = '✓ FULLY CHARGED';
+          else if (scenarioState.nearCharger)      statEl.textContent = 'Press E to connect charger';
+          else                                     statEl.textContent = 'Pull forward into the EV bay';
+        }
+
+        // Update 5 segment icons
+        const filled = Math.floor((lvl / 100) * 5);
+        for (let i = 0; i < 5; i++) {
+          const seg = document.getElementById(`bseg-${i}`);
+          if (seg) seg.classList.toggle('filled', i < filled);
+        }
+      } else {
+        battEl.classList.add('hidden');
       }
     }
   }
